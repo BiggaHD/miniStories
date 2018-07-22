@@ -1,0 +1,19 @@
+{
+  "name": "mini-stories",
+  "version": "1.0.0",
+  "description": "App that let's you create profiles, write public or private stories, comment on them, and share them with others if you want.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "BiggaHD",
+  "license": "MIT",
+  "dependencies": {
+    "cookie-parser": "^1.4.3",
+    "express": "^4.15.4",
+    "express-session": "^1.15.5",
+    "mongoose": "^4.11.12",
+    "passport": "^0.4.0",
+    "passport-google-oauth20": "^1.0.0"
+  }
+}
