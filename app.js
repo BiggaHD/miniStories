@@ -8,8 +8,6 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const passport = require('passport');
 
-app.use("/public", express.static('public')); 
-
 // Load Models
 require('./models/User');
 require('./models/Story');
@@ -30,7 +28,8 @@ const {
   truncate,
   stripTags,
   formatDate,
-  select
+  select,
+  editIcon
 } = require('./helpers/hbs');
 
 // Map global promises
@@ -57,7 +56,8 @@ app.engine('handlebars', exphbs({
     truncate: truncate,
     stripTags: stripTags,
     formatDate:formatDate,
-    select:select
+    select:select,
+    editIcon: editIcon
   },
   defaultLayout:'main'
 }));
@@ -91,5 +91,5 @@ app.use('/stories', stories);
 const port = process.env.PORT || 5000;
 
 app.listen(port, () => {
-  console.log(`Server started on port ${port}`)
+  console.log(`Server running on port ${port}`)
 });
