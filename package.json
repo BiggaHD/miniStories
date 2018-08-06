@@ -4,7 +4,8 @@
   "description": "App that let's you create profiles, write public or private stories, comment on them, and share them with others if you want.",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "dev": "nodemon app.js"
   },
   "author": "BiggaHD",
   "license": "MIT",
