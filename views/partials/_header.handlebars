@@ -4,9 +4,9 @@
       <a href="/" class="brand-logo center"><i class="fa fa-book fa-2x hide-on-small-only"></i>miniStories</a>
       <a href="#" data-activates="main-menu" class="button-collapse show-on-large"><i class="fa fa-bars"></i></a>
       <!-- RIGHT NAV -->
-      <ul class="right hide-on-small-only">
+      <ul class="right hide-on-small-only margin-fix">
         {{#if user}}
-        <li><a href="/dashboard">Welcome {{user.firstName}}</a></li>
+        <li><a href="/dashboard">Hi, {{user.firstName}}</a></li>
         <li><a href="/auth/logout"><i class="fa fa-sign-out"></i> Logout</a></li>
         {{else}}
         <li><a href="/stories"><i class="fa fa-book"></i> Public Stories</a></li>
@@ -14,10 +14,11 @@
       </ul>
       <!-- SIDE MENU -->
       <ul class="side-nav" id="main-menu">
-        {{#if user}} 
+        {{#if user}}
         {{else}}
         <li>
-          <a class="btn light-green accent-3" href="/auth/google"><i class="fa fa-google left"></i> Login With Google</a>
+          <a class="btn light-green accent-3" href="/auth/google"><i class="fa fa-google left"></i> Login With
+            Google</a>
         </li>
         {{/if}}
         <li><a href="/stories"><i class="fa fa-book"></i> Public Stories</a></li>

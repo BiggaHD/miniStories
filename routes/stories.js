@@ -1,173 +1,212 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const mongoose = require('mongoose');
-const Story = mongoose.model('stories');
-const User = mongoose.model('users');
-const {ensureAuthenticated, ensureGuest} = require('../helpers/auth');
+const Story = require("../models/Story");
+const { ensureAuthenticated } = require("../middleware/auth");
 
 // Stories Index
-router.get('/', (req, res) => {
-  Story.find({status:'public'})
-    .populate('user')
-    .sort({date:'desc'})
-    .then(stories => {
-      res.render('stories/index', {
-        stories: stories
-      });
+router.get("/", async (req, res) => {
+  try {
+    const stories = await Story.find({ status: "public" })
+      .populate("user")
+      .sort({ createdAt: "desc" })
+      .lean();
+    res.render("stories/index", {
+      stories,
     });
+  } catch (err) {
+    console.error(err);
+    res.render("error/500");
+  }
 });
 
 // Show Single Story
-router.get('/show/:id', (req, res) => {
-  Story.findOne({
-    _id: req.params.id
+// Show Single Story
+router.get("/show/:id", async (req, res) => {
+  const story = await Story.findOne({
+    _id: req.params.id,
   })
-  .populate('user')
-  .populate('comments.commentUser')
-  .then(story => {
-    if(story.status == 'public'){
-      res.render('stories/show', {
-        story:story
-      });
-    } else {
-      if(req.user){
-        if(req.user.id == story.user._id){
-          res.render('stories/show', {
-            story:story
-          });
-        } else {
-          res.redirect('/stories');
-        }
+    .populate("user")
+    .populate("comments.commentUser");
+  if (story.status == "public") {
+    res.render("stories/show", {
+      story,
+    });
+  } else {
+    if (req.user) {
+      if (req.user.id == story.user._id) {
+        res.render("stories/show", {
+          story,
+        });
       } else {
-        res.redirect('/stories');
+        res.redirect("/stories");
       }
+    } else {
+      res.redirect("/stories");
     }
-  });
+  }
 });
 
 // List stories from a user
-router.get('/user/:userId', (req, res) => {
-  Story.find({user: req.params.userId, status: 'public'})
-    .populate('user')
-    .then(stories => {
-      res.render('stories/index', {
-        stories:stories
-      });
+router.get("/user/:userId", ensureAuthenticated, async (req, res) => {
+  try {
+    const stories = await Story.find({
+      user: req.params.userId,
+      status: "public",
+    })
+      .populate("user")
+      .lean();
+
+    res.render("stories/index", {
+      stories,
     });
+  } catch (err) {
+    console.error(err);
+    res.render("error/500");
+  }
 });
 
 // Logged in users stories
-router.get('/my', ensureAuthenticated, (req, res) => {
-  Story.find({user: req.user.id})
-    .populate('user')
-    .then(stories => {
-      res.render('stories/index', {
-        stories:stories
-      });
+router.get("/my", ensureAuthenticated, async (req, res) => {
+  try {
+    const stories = await Story.find({ user: req.user.id })
+      .populate("user")
+      .lean();
+    res.render("stories/index", {
+      stories,
     });
+  } catch (error) {
+    console.error(error);
+    res.render("error/500");
+  }
 });
 
 // Add Story Form
-router.get('/add', ensureAuthenticated, (req, res) => {
-  res.render('stories/add');
+router.get("/add", ensureAuthenticated, (req, res) => {
+  res.render("stories/add");
 });
 
 // Edit Story Form
-router.get('/edit/:id', ensureAuthenticated, (req, res) => {
-  Story.findOne({
-    _id: req.params.id
-  })
-  .then(story => {
-    if(story.user != req.user.id){
-      res.redirect('/stories');
+router.get("/edit/:id", ensureAuthenticated, async (req, res) => {
+  try {
+    const story = await Story.findOne({
+      _id: req.params.id,
+    }).lean();
+
+    if (!story) {
+      return res.render("error/404");
+    }
+
+    if (story.user != req.user.id) {
+      res.redirect("/stories");
     } else {
-      res.render('stories/edit', {
-        story: story
+      res.render("stories/edit", {
+        story,
       });
     }
-  });
+  } catch (err) {
+    console.error(err);
+    return res.render("error/500");
+  }
 });
 
-// Process Add Story
-router.post('/', (req, res) => {
-  let allowComments;
+// Create Story
+router.post("/", ensureAuthenticated, async (req, res) => {
+  const { allowComments, title, body, status } = req.body;
+  try {
+    const newStory = {
+      title,
+      body,
+      status,
+      allowComments: allowComments ? true : false,
+      user: req.user.id,
+    };
 
-  if(req.body.allowComments){
-    allowComments = true;
-  } else {
-    allowComments = false;
+    const story = await Story.create(newStory);
+    res.redirect(`/stories/show/${story.id}`);
+  } catch (error) {
+    console.error(error);
+    res.render("error/500");
   }
-
-  const newStory = {
-    title: req.body.title,
-    body: req.body.body,
-    status: req.body.status,
-    allowComments:allowComments,
-    user: req.user.id
-  }
-
-  // Create Story
-  new Story(newStory)
-    .save()
-    .then(story => {
-      res.redirect(`/stories/show/${story.id}`);
-    });
 });
 
-// Edit Form Process
-router.put('/:id', (req, res) => {
-  Story.findOne({
-    _id: req.params.id
-  })
-  .then(story => {
-    let allowComments;
-    
-    if(req.body.allowComments){
-      allowComments = true;
-    } else {
-      allowComments = false;
+// Update story
+router.put("/:id", ensureAuthenticated, async (req, res) => {
+  const { allowComments, title, body, status } = req.body;
+
+  try {
+    let story = await Story.findById(req.params.id).lean();
+
+    if (!story) {
+      return res.render("error/404");
     }
 
     // New values
-    story.title = req.body.title;
-    story.body = req.body.body;
-    story.status = req.body.status;
-    story.allowComments = allowComments;
+    const updatedStory = {
+      title,
+      body,
+      status,
+      allowComments: allowComments ? true : false,
+    };
 
-    story.save()
-      .then(story => {
-        res.redirect('/dashboard');
-      });
-  });
+    if (story.user != req.user.id) {
+      res.redirect("/stories");
+    } else {
+      story = await Story.findOneAndUpdate(
+        { _id: req.params.id },
+        updatedStory,
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+      res.redirect("/dashboard");
+    }
+  } catch (error) {
+    console.log(error);
+    return res.render("error/500");
+  }
 });
 
 // Delete Story
-router.delete('/:id', (req, res) => {
-  Story.remove({_id: req.params.id})
-    .then(() => {
-      res.redirect('/dashboard');
-    });
+router.delete("/:id", ensureAuthenticated, async (req, res) => {
+  try {
+    let story = await Story.findById(req.params.id).lean();
+
+    if (!story) {
+      return res.render("error/404");
+    }
+
+    if (story.user != req.user.id) {
+      res.redirect("/stories");
+    } else {
+      await Story.remove({ _id: req.params.id });
+      res.redirect("/dashboard");
+    }
+  } catch (err) {
+    console.error(err);
+    return res.render("error/500");
+  }
 });
 
 // Add Comment
-router.post('/comment/:id', (req, res) => {
-  Story.findOne({
-    _id: req.params.id
-  })
-  .then(story => {
+router.post("/comment/:id", ensureAuthenticated, async (req, res) => {
+  try {
+    const story = await Story.findOne({ _id: req.params.id });
+
     const newComment = {
       commentBody: req.body.commentBody,
-      commentUser: req.user.id
-    }
+      commentUser: req.user.id,
+    };
 
-    // Add to comments array
+    // Add to comment at the start
     story.comments.unshift(newComment);
 
-    story.save()
-      .then(story => {
-        res.redirect(`/stories/show/${story.id}`);
-      });
-  });
+    await story.save();
+    res.redirect(`/stories/show/${story.id}`);
+  } catch (error) {
+    console.log(error);
+    return res.render("error/500");
+  }
 });
 
 module.exports = router;

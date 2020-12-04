@@ -7,15 +7,10 @@ const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const passport = require("passport");
-const http = require("http");
-
-setInterval(function() {
-  http.get("http://bigga-share.herokuapp.com/");
-}, 3600000); // every 1h
-
-// Load Models
-require("./models/User");
-require("./models/Story");
+const Handlebars = require("handlebars");
+const {
+  allowInsecurePrototypeAccess,
+} = require("@handlebars/allow-prototype-access");
 
 // Passport Config
 require("./config/passport")(passport);
@@ -34,18 +29,18 @@ const {
   stripTags,
   formatDate,
   select,
-  editIcon
-} = require("./helpers/hbs");
+  editIcon,
+} = require("./middleware/hbs");
 
 // Map global promises
 mongoose.Promise = global.Promise;
 // Mongoose Connect
 mongoose
   .connect(keys.mongoURI, {
-    useMongoClient: true
+    useMongoClient: true,
   })
   .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+  .catch((err) => console.log(err));
 
 const app = express();
 
@@ -53,7 +48,7 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// MEthod Override Middelware
+// Method Override Middelware
 app.use(methodOverride("_method"));
 
 // Handlebars Middleware
@@ -61,13 +56,14 @@ app.engine(
   "handlebars",
   exphbs({
     helpers: {
-      truncate: truncate,
-      stripTags: stripTags,
-      formatDate: formatDate,
-      select: select,
-      editIcon: editIcon
+      truncate,
+      stripTags,
+      formatDate,
+      select,
+      editIcon,
     },
-    defaultLayout: "main"
+    defaultLayout: "main",
+    handlebars: allowInsecurePrototypeAccess(Handlebars),
   })
 );
 app.set("view engine", "handlebars");
@@ -77,7 +73,7 @@ app.use(
   session({
     secret: "secret",
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
   })
 );
 
@@ -86,7 +82,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Set global vars
-app.use((req, res, next) => {
+app.use(function (req, res, next) {
   res.locals.user = req.user || null;
   next();
 });

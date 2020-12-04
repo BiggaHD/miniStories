@@ -1,3 +1,7 @@
+html {
+  height: 100%;
+}
+
 body {
   display: flex;
   min-height: 100vh;
@@ -8,26 +12,44 @@ main {
   flex: 1 0 auto;
 }
 
-.nav-wrapper .fa-bars{
-  font-size:25px;
+.nav-wrapper .fa-bars {
+  font-size: 25px;
 }
 
-footer{
-  margin-top:20px;
+footer {
+  display: inline-block;
+  height: auto;
+  width: 100%;
 }
 
-.story-text{
-  height:120px;
+.story-text {
+  height: 120px;
 }
 
-.dash-status{
+.dash-status {
   text-transform: capitalize;
 }
 
-#delete-form{
-  display:inline;
+#delete-form {
+  display: inline;
 }
 
 nav ul li:hover {
   background-color: greenyellow;
+}
+
+footer ul li {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: black;
+}
+
+footer ul li a:hover {
+  color: greenyellow;
+}
+
+.margin-fix {
+  margin-right: -4rem;
 }

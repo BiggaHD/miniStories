@@ -1,26 +1,26 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 // Create Shema
 const UserSchema = new Schema({
-  googleID:{
-    type:String,
-    required: true
-  },
-  email:{
+  googleID: {
     type: String,
-    required: true
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
   },
   firstName: {
-    type: String
+    type: String,
   },
   lastName: {
-    type: String
+    type: String,
   },
   image: {
-    type:String
-  }
+    type: String,
+  },
 });
 
 // Create collection and add schema
-mongoose.model('users', UserSchema);
+module.exports = mongoose.model("User", UserSchema);
